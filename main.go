@@ -127,6 +127,17 @@ func webScrape() {
 	*/
 	c := colly.NewCollector()
 	// setting a valid User-Agent header
+	/*
+
+		Avoid being blocked!
+		- Many websites implement anti-scraping anti-bot techniques. The most basic approach involves banning
+		HTTP requests based on their headers. Specifically, they generally block HTTP requests that come with
+		an invalid User-Agent header.
+
+		Set a global User-Agent header gor all the requests performed by Colly with the UserAgent Collect field
+		as follows:
+
+	*/
 	c.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
 
 	// iterating over the list of pagination links to implement the crawling logic
@@ -220,5 +231,21 @@ func webScrape() {
 	on a unique declarative language.
 	- Selenium: Probably the most well-known headless browser, ideal for scraping dynamic
 	content. It doesn't offer official support but there's a port to use it in Go.
+
+*/
+
+// Conclusion
+/*
+
+	In this step-by-step Go tutorial, you saw the building blocks to get started on Golang web scraping.
+
+	As a recap, you learned:
+	- How to perform basic data scraping with Go using Colly.
+	- How to achieve crawling logic to visit a whole website.
+	- The reason why you may need a Go headless browser solution.
+	- How to scrape a dynamic-content website with chromedp.
+
+	Scraping can become challenging because of the anti-scraping measures implemented by
+	several websites.
 
 */
