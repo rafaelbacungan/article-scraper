@@ -73,11 +73,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if m.Content == "test" {
-		fmt.Println("Hello")
 		_, err := s.ChannelMessageSend(m.ChannelID, "Who enters my domain?")
 		if err != nil {
 			fmt.Println(err)
 		}
+	}
+
+	if m.Content == "webscrape" {
+		webScrape()
 	}
 }
 
@@ -99,9 +102,6 @@ func contains(s []string, str string) bool {
 }
 
 func webScrape() {
-	// Colly's main entity is the Collector. A Collector allows you to perform HTTP requests. Also, it gives you
-	// access to the web scraping callbacks offered by the Colly interface.
-
 	// Initializing the slice of structs that will contain the scraped data
 	var pokemonProducts []PokemonProduct
 
@@ -121,6 +121,10 @@ func webScrape() {
 	limit := 5
 
 	// initializing a Colly instance
+	/*
+		Colly's main entity is the Collector. A Collector allows you to perform HTTP requests. Also,
+		Also, it gives you access to the web scraping callbacks offered by the Colly interface.
+	*/
 	c := colly.NewCollector()
 	// setting a valid User-Agent header
 	c.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
@@ -202,3 +206,19 @@ func webScrape() {
 	}
 	defer writer.Flush()
 }
+
+// Other Web Scraping Libraries for Go
+/*
+
+	Other great libraries for web scraping with Golang are:
+	- ZenRows: A complete web scraping API that handles all anti-bot bypasses for you.
+	It comes with headless browser capabilities, CAPTCHA bypass, rotating proxies and more.
+	- GoQuery: A Go library that offers a syntax and a set of features similar to jQuery.
+	You can use it to perform web scraping just like you would do in JQuery.
+	- Ferret: A portable, extensible and fast web scraping system that aims to simplify
+	data extraction from the web. Ferret allows users to focus on the data and is based
+	on a unique declarative language.
+	- Selenium: Probably the most well-known headless browser, ideal for scraping dynamic
+	content. It doesn't offer official support but there's a port to use it in Go.
+
+*/
