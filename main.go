@@ -70,7 +70,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	if m.Content == "test" {
-		fmt.Println("Helo")
+		fmt.Println("Hello")
+		_, err := s.ChannelMessageSend(m.ChannelID, "Who enters my domain?")
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
-
 }
