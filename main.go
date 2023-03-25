@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/bwmarrin/discordgo"
+	"github.com/gocolly/colly"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -76,4 +78,34 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			fmt.Println(err)
 		}
 	}
+}
+
+func webScrape() {
+	// Colly's main entity is the Collector. A Collector allows you to perform HTTP requests. Also, it gives you
+	// access to the web scraping callbacks offered by the Colly interface.
+
+	// Initialize a Colly Collector with the NewCollector function:
+	c := colly.NewCollector()
+	c.Visit("https://en.wikipedia.org/wiki/Main_Page")
+
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting: ", r.URL)
+	})
+
+	c.OnError(func(_ *colly.Response, err error) {
+		log.Println("Something went wrong: ", err)
+	})
+
+	c.OnResponse(func(r *colly.Response) {
+		fmt.Println("Page visited: ", r.Request.URL)
+	})
+
+	c.OnHTML("a", func(e *colly.HTMLElement) {
+		// printing all URLs associated with the a links in the page
+		fmt.Println("%v", e.Attr("href"))
+	})
+
+	c.OnScraped(func(r *colly.Response) {
+		fmt.Println(r.Request.URL, " scraped!")
+	})
 }
