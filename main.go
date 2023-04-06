@@ -82,6 +82,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == "webscrape" {
 		webScrape()
 	}
+
+	if m.Content == "test" {
+		testWebScrape()
+	}
 }
 
 // install colly into the application first
@@ -89,6 +93,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 // defining a data structure to store the scraped data
 type PokemonProduct struct {
 	url, image, name, price string
+}
+
+type Articles struct {
+	url string
 }
 
 // it verifies if a string is present in a slice
@@ -101,15 +109,44 @@ func contains(s []string, str string) bool {
 	return false
 }
 
+func testWebScrape() {
+	// Instantiate default collector
+	c := colly.NewCollector(
+		// Visit only domains: hackerspace.org, wiki.hackerspaces.org
+		// colly.AllowedDomains("hackerspaces.org", "wiki.hackerspaces.org"),
+		colly.AllowedDomains("dev.to"),
+	)
+
+	// On every a element which has href attribute, call callback
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		// Print link
+		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+		// Visit link found on page
+		// Only those links are visited which are in AllowedDomains
+		c.Visit(e.Request.AbsoluteURL(link))
+	})
+
+	// Before making a request print "Visiting..."
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting", r.URL.String())
+	})
+
+	// Start scraping on https://hackerspace.org
+	c.Visit("https://dev.to/")
+}
+
 func webScrape() {
 	// Initializing the slice of structs that will contain the scraped data
 	var pokemonProducts []PokemonProduct
+	var articles []Articles
 
 	// Initializing the list of pages to scrape with an empty slice
 	var pagesToScrape []string
 
 	// the first pagination URL to scrape
-	pageToScrape := "https://scrapeme.live/shop/page/1/"
+	// pageToScrape := "https://scrapeme.live/shop/page/1/"
+	pageToScrape := "https://dev.to/search?q=golang"
 
 	// Initializing the list of pages discovered with a pageToScrape
 	pagesDiscovered := []string{pageToScrape}
@@ -141,9 +178,20 @@ func webScrape() {
 	c.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
 
 	// iterating over the list of pagination links to implement the crawling logic
+	c.OnHTML("article.crayons-story", func(e *colly.HTMLElement) {
+		article := Articles{}
+
+		article.url = e.ChildAttr("a", "href")
+		fmt.Println("article url: ", article.url)
+		articles = append(articles, article)
+	})
+
+	fmt.Println("articles: ", articles)
+
 	c.OnHTML("a.page-numbers", func(e *colly.HTMLElement) {
 		// discovering a new page
 		newPaginationLink := e.Attr("href")
+		fmt.Println("page numbers function")
 
 		// if the page discovered is new
 		if !contains(pagesToScrape, newPaginationLink) {
@@ -174,6 +222,8 @@ func webScrape() {
 
 			pageToScrape = pagesToScrape[0]
 			pagesToScrape = pagesToScrape[1:]
+			fmt.Println("pageToScrape: ", pageToScrape)
+			fmt.Println("pagesToScrape: ", pagesToScrape)
 
 			// incrementing the iteration counter
 			i++
@@ -188,6 +238,7 @@ func webScrape() {
 	if err != nil {
 		log.Fatalln("failed to create output cSV file", err)
 	}
+
 	defer file.Close()
 
 	// initializing a file writer
