@@ -14,7 +14,6 @@ import (
 )
 
 // Variables used for command line parameters
-// Token MTA4NjQ0NTEwNjI1MDM5OTc3Ng.GrxLcW.6MZFhvGTkMeJs1OLE5-Mi-LwThswdix37V11gU
 var (
 	Token string
 )
@@ -57,10 +56,6 @@ func main() {
 
 	// Cleanly close down the Discord session
 	dg.Close()
-}
-
-type Gopher struct {
-	Name string `json: "name"`
 }
 
 // This function will be called (due to AddHandler above) every time a new
@@ -165,7 +160,6 @@ func testWebScrape(keyword string) []Articles {
 	// begin scraping the page
 	c.Visit(pageToScrape)
 	// convert the scraped articles into a csv file.
-	fmt.Println(articles)
 	return articles
 }
 
