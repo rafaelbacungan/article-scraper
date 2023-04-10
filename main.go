@@ -65,7 +65,6 @@ type Gopher struct {
 
 // This function will be called (due to AddHandler above) every time a new
 // message is created on any channel that the authenticated bot has access to.
-
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Ignore all messages created by the bot itself
@@ -73,20 +72,62 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	if m.Content == "test" {
+	if m.Content == "/test" {
 		_, err := s.ChannelMessageSend(m.ChannelID, "Who enters my domain?")
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
 
-	if m.Content == "testscrape" {
-		_, err := s.ChannelMessageSend(m.ChannelID, "The way is shut")
-		if err != nil {
-			fmt.Println(err)
+	if strings.HasPrefix(m.Content, "/scrape") {
+		keyword := grabKeyword(m.Content)
+		articles := testWebScrape(keyword)
+
+		// Iterate through the fields of the user struct and create a message embed field for each one.
+		fields := make([]*discordgo.MessageEmbedField, 0)
+
+		// TODO: refactor foreach loop
+		for _, article := range articles {
+			field := &discordgo.MessageEmbedField{
+				Name:   "Title",
+				Value:  article.title,
+				Inline: true,
+			}
+			fields = append(fields, field)
+			field = &discordgo.MessageEmbedField{
+				Name:   "Author",
+				Value:  article.author,
+				Inline: true,
+			}
+			fields = append(fields, field)
+			field = &discordgo.MessageEmbedField{
+				Name:   "URL",
+				Value:  article.url,
+				Inline: true,
+			}
+			fields = append(fields, field)
 		}
-		testWebScrape()
+
+		// Create a new message embed
+		embed := &discordgo.MessageEmbed{
+			Color:       0x00ff00, // Set the embed color to green
+			Title:       "Articles",
+			Description: "Articles retrieved",
+			Fields:      fields,
+		}
+
+		// Send the message
+		_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed)
+		if err != nil {
+			fmt.Println("Error sending message; ", err)
+			return
+		}
 	}
+}
+
+func grabKeyword(message string) string {
+	keyword := strings.TrimPrefix(message, "/scrape ")
+	return keyword
 }
 
 // defining a data structure to store the scraped data
@@ -96,9 +137,11 @@ type Articles struct {
 	url    string
 }
 
-func testWebScrape() {
+func testWebScrape(keyword string) []Articles {
 	// initialize articles struct
 	var articles []Articles
+	// setup tag for filtering purposes
+	tag := "#" + keyword
 
 	// Instantiate default collector
 	pageToScrape := "https://dev.to"
@@ -111,7 +154,7 @@ func testWebScrape() {
 	// iterating over the list of pagination links to implement the crawling logic
 	c.OnHTML("div.crayons-story", func(e *colly.HTMLElement) {
 		tags := e.ChildText("a.crayons-tag")
-		if containsTag(tags, "#react") {
+		if containsTag(tags, tag) {
 			article := Articles{}
 			article.title = e.ChildText("h2.crayons-story__title")
 			article.author = e.ChildText("a.crayons-story__secondary")
@@ -119,8 +162,11 @@ func testWebScrape() {
 			articles = append(articles, article)
 		}
 	})
+	// begin scraping the page
 	c.Visit(pageToScrape)
-	csvConvert(articles)
+	// convert the scraped articles into a csv file.
+	fmt.Println(articles)
+	return articles
 }
 
 func containsTag(tags string, tag string) bool {
@@ -139,7 +185,6 @@ func csvConvert(articles []Articles) {
 	}
 
 	defer file.Close()
-
 	// initializing a file writer
 	writer := csv.NewWriter(file)
 
