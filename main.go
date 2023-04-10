@@ -146,7 +146,7 @@ func testWebScrape(keyword string) []Articles {
 	c := colly.NewCollector()
 	c.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
 
-	// iterating over the list of pagination links to implement the crawling logic
+	// scrape all articles from the home page
 	c.OnHTML("div.crayons-story", func(e *colly.HTMLElement) {
 		tags := e.ChildText("a.crayons-tag")
 		if containsTag(tags, tag) {
