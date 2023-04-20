@@ -136,8 +136,6 @@ type Articles struct {
 func testWebScrape(keyword string) []Articles {
 	// initialize articles struct
 	var articles []Articles
-	// setup tag for filtering purposes
-	tag := "#" + keyword
 
 	// Initialize a Colly instance
 	c := colly.NewCollector()
@@ -145,26 +143,43 @@ func testWebScrape(keyword string) []Articles {
 
 	// Loop through the list of websites from websites.go, extract their properties and start scraping the needed info
 	for _, website := range websites.WebsiteList {
+		/*
+			@pageToScrape string - a string containing the url of the webpage that needs scraping
+			@article struct - initiate an Articles struct to store the scraped data that will be eventually
+			pushed to the articles array
+			@burst int - burst is used to retrieve a maximum of three articles per website to keep messages reasonable
+			for the bot and not to exceed character limits when sending messages.
+		*/
 		pageToScrape := website.PageToScrape
+		article := Articles{}
+		burst := 0
 
 		// scrape all articles from the home page
-		c.OnHTML("div.crayons-story", func(e *colly.HTMLElement) {
-			tags := e.ChildText("a.crayons-tag")
-			if containsTag(tags, tag) {
-				article := Articles{}
-				article.title = e.ChildText(website.TitleHTML)
-				article.author = e.ChildText(website.AuthorHTML)
-				article.url = pageToScrape + e.ChildAttr(website.UrlHTML, website.UrlAttr)
-				articles = append(articles, article)
+		c.OnHTML(website.ParentDiv, func(e *colly.HTMLElement) {
+			tags := e.ChildText(website.Tag)
+
+			if containsTag(strings.ToLower(tags), strings.ToLower(keyword)) {
+
+				if burst%3 == 0 && burst != 0 {
+					return
+				} else {
+					burst += 1
+					article.title = e.ChildText(website.TitleHTML)
+					article.author = e.ChildText(website.AuthorHTML)
+					article.url = pageToScrape + e.ChildAttr(website.UrlHTML, website.UrlAttr)
+					articles = append(articles, article)
+				}
 			}
 		})
-		// begin scraping the page
+
+		// visit the page to begin scraping
 		c.Visit(pageToScrape)
 	}
-	// convert the scraped articles into a csv file.
+	// return the articles for the message to be processed.
 	return articles
 }
 
+// retrieves the user input and checks for any similarities with the scraped data
 func containsTag(tags string, tag string) bool {
 	if strings.Contains(tags, tag) {
 		return true
