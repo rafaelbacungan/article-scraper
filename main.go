@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ArticleScraper/websites"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -138,27 +139,28 @@ func testWebScrape(keyword string) []Articles {
 	// setup tag for filtering purposes
 	tag := "#" + keyword
 
-	// Instantiate default collector
-	pageToScrape := "https://dev.to"
-	// pageToScrape := "https://www.technologyreview.com/topic/artificial-intelligence/"
-
 	// Initialize a Colly instance
 	c := colly.NewCollector()
 	c.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36"
 
-	// scrape all articles from the home page
-	c.OnHTML("div.crayons-story", func(e *colly.HTMLElement) {
-		tags := e.ChildText("a.crayons-tag")
-		if containsTag(tags, tag) {
-			article := Articles{}
-			article.title = e.ChildText("h2.crayons-story__title")
-			article.author = e.ChildText("a.crayons-story__secondary")
-			article.url = pageToScrape + e.ChildAttr("a", "href")
-			articles = append(articles, article)
-		}
-	})
-	// begin scraping the page
-	c.Visit(pageToScrape)
+	// Loop through the list of websites from websites.go, extract their properties and start scraping the needed info
+	for _, website := range websites.WebsiteList {
+		pageToScrape := website.PageToScrape
+
+		// scrape all articles from the home page
+		c.OnHTML("div.crayons-story", func(e *colly.HTMLElement) {
+			tags := e.ChildText("a.crayons-tag")
+			if containsTag(tags, tag) {
+				article := Articles{}
+				article.title = e.ChildText(website.TitleHTML)
+				article.author = e.ChildText(website.AuthorHTML)
+				article.url = pageToScrape + e.ChildAttr(website.UrlHTML, website.UrlAttr)
+				articles = append(articles, article)
+			}
+		})
+		// begin scraping the page
+		c.Visit(pageToScrape)
+	}
 	// convert the scraped articles into a csv file.
 	return articles
 }
