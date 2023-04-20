@@ -75,7 +75,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	if strings.HasPrefix(m.Content, "/scrape") {
+	if strings.HasPrefix(m.Content, "-sauce") {
 		keyword := grabKeyword(m.Content)
 		articles := testWebScrape(keyword)
 
@@ -122,7 +122,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func grabKeyword(message string) string {
-	keyword := strings.TrimPrefix(message, "/scrape ")
+	keyword := strings.TrimPrefix(message, "-sauce ")
 	return keyword
 }
 
